@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <title>AI SaaS Workspace</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --bg-dark: #0f0f12;
+            --bg-panel: #18181d;
+            --bg-hover: #22222a;
+            --border: #2a2a35;
+            --text-primary: #f4f4f5;
+            --text-secondary: #a1a1aa;
+            --accent: #6366f1;
+            --accent-glow: rgba(99, 102, 241, 0.3);
+        }
+        
+        * {
+            font-family: 'Outfit', sans-serif;
+        }
+        
+        code, .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        
+        body {
+            background: var(--bg-dark);
+            background-image: 
+                radial-gradient(ellipse at 20% 0%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 100%, rgba(139, 92, 246, 0.06) 0%, transparent 50%);
+        }
+        
+        .panel {
+            background: var(--bg-panel);
+            border-color: var(--border);
+        }
+        
+        .glow-border:focus {
+            box-shadow: 0 0 0 2px var(--accent-glow);
+            border-color: var(--accent);
+        }
+        
+        .tree-item:hover {
+            background: var(--bg-hover);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px var(--accent-glow);
+        }
+        
+        .scrollbar-thin::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 3px;
+        }
+        
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+            background: #3a3a45;
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.8; }
+        }
+        
+        .status-dot {
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+        
+        /* Resizable column handles */
+        .resize-handle {
+            width: 5px;
+            cursor: col-resize;
+            background: transparent;
+            position: relative;
+            flex-shrink: 0;
+            z-index: 10;
+            transition: background 0.15s ease;
+        }
+        
+        .resize-handle::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 50%;
+            width: 1px;
+            background: var(--border);
+            transform: translateX(-50%);
+            transition: all 0.15s ease;
+        }
+        
+        .resize-handle:hover::after,
+        .resize-handle.active::after {
+            width: 3px;
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent-glow);
+        }
+        
+        .resize-handle:hover,
+        .resize-handle.active {
+            background: rgba(99, 102, 241, 0.1);
+        }
+        
+        /* Prevent text selection while resizing */
+        body.resizing {
+            cursor: col-resize !important;
+            user-select: none;
+        }
+        
+        body.resizing * {
+            cursor: col-resize !important;
+        }
+        
+        /* Column min/max widths */
+        .resizable-sidebar {
+            min-width: 200px;
+            max-width: 400px;
+        }
+        
+        .resizable-ai-panel {
+            min-width: 280px;
+            max-width: 600px;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col text-zinc-100">
+    <!-- Modal Backdrop & Container -->
+    <div id="modal-backdrop" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden opacity-0 transition-opacity duration-200"></div>
+    
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div class="modal-content bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl max-w-md w-full transform scale-95 opacity-0 transition-all duration-200">
+            <div class="p-6">
+                <div class="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-7 h-7 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-center text-zinc-100 mb-2">Delete Document</h3>
+                <p class="text-sm text-zinc-400 text-center mb-6">Are you sure you want to delete "<span id="delete-doc-name" class="text-zinc-200 font-medium"></span>"? This action cannot be undone.</p>
+                <div class="flex gap-3">
+                    <button onclick="closeDeleteModal()" class="flex-1 px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-medium transition-colors">
+                        Cancel
+                    </button>
+                    <button id="confirm-delete-btn" class="flex-1 px-4 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-medium transition-colors">
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Link Input Modal -->
+    <div id="link-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div class="modal-content bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl max-w-md w-full transform scale-95 opacity-0 transition-all duration-200">
+            <div class="p-6">
+                <div class="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-7 h-7 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-center text-zinc-100 mb-4">Insert Link</h3>
+                <div class="mb-4">
+                    <label class="block text-xs font-medium text-zinc-400 mb-2">URL</label>
+                    <input type="url" id="link-url-input" placeholder="https://example.com" 
+                           class="w-full bg-zinc-800/50 border border-zinc-700 rounded-xl px-4 py-3 text-sm placeholder-zinc-500 focus:outline-none glow-border transition-all">
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="closeLinkModal()" class="flex-1 px-4 py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-medium transition-colors">
+                        Cancel
+                    </button>
+                    <button onclick="confirmLink()" class="flex-1 px-4 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium transition-colors">
+                        Insert Link
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3"></div>
+    <!-- Top Bar -->
+    <header class="h-12 border-b border-zinc-800 flex items-center justify-between px-4 bg-zinc-900/50 backdrop-blur-sm">
+        <div class="flex items-center gap-3">
+            <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 flex items-center justify-center">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+            </div>
+            <span class="font-semibold text-sm tracking-tight">Pineback</span>
+        </div>
+        <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-800/50 border border-zinc-700">
+                <div class="w-2 h-2 rounded-full bg-emerald-400 status-dot"></div>
+                <span class="text-xs text-zinc-400">Connected</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex flex-1 overflow-hidden">
+        <!-- Left Sidebar - Project Tree -->
+        <aside id="left-sidebar" class="w-64 panel flex flex-col resizable-sidebar" style="width: 256px;">
+            <div class="p-4 border-b border-zinc-800">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-xs font-semibold uppercase tracking-wider text-zinc-500">Project</h2>
+                    <button class="w-6 h-6 rounded flex items-center justify-center hover:bg-zinc-700 transition-colors">
+                        <svg class="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="relative">
+                    <svg class="w-4 h-4 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="text" placeholder="Search docs..." 
+                           class="w-full bg-zinc-800/50 border border-zinc-700 rounded-lg pl-9 pr-3 py-2 text-sm placeholder-zinc-500 focus:outline-none glow-border transition-all">
+                </div>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto scrollbar-thin p-2">
+                <ul id="document-list" class="space-y-0.5">
+                    {% include 'core/partials/document_list.html' %}
+                </ul>
+            </div>
+            
+            <div class="p-3 border-t border-zinc-800">
+                <button 
+                    hx-post="{% url 'create_document' %}"
+                    hx-target="#document-list"
+                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                    class="btn-primary w-full py-2 px-4 rounded-lg text-sm font-medium text-white flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    </svg>
+                    New Document
+                </button>
+            </div>
+        </aside>
+
+        <!-- Resize Handle: Left Sidebar <-> Editor -->
+        <div id="resize-handle-left" class="resize-handle" data-resize="left"></div>
+
+        <!-- Center - Document Editor -->
+        <section id="editor-content" class="flex-1 flex flex-col panel">
+            <!-- Empty state - shown when no document is selected -->
+            <div class="flex-1 flex flex-col items-center justify-center text-center px-8">
+                <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-zinc-800 to-zinc-900 border border-zinc-700 flex items-center justify-center mb-6">
+                    <svg class="w-10 h-10 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-medium text-zinc-400 mb-2">No Document Selected</h3>
+                <p class="text-sm text-zinc-600 max-w-xs leading-relaxed">Select a document from the sidebar to start editing, or create a new one.</p>
+            </div>
+        </section>
+
+        <!-- Resize Handle: Editor <-> AI Panel -->
+        <div id="resize-handle-right" class="resize-handle" data-resize="right"></div>
+
+        <!-- Right Sidebar - AI Twin Panel -->
+        <aside id="ai-column" class="panel flex flex-col resizable-ai-panel" style="width: 384px;">
+            <div id="ai-column-inner" class="flex flex-col h-full">
+                <!-- Default empty state - will be replaced when a document is selected -->
+                <div class="p-4 border-b border-zinc-800">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500/20 to-teal-500/20 border border-emerald-500/30 flex items-center justify-center">
+                            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="text-sm font-semibold text-zinc-200">AI Twin</h3>
+                            <p class="text-xs text-zinc-500">LLM-Optimized</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex-1 flex flex-col items-center justify-center text-center px-6">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-zinc-800 to-zinc-900 border border-zinc-700 flex items-center justify-center mb-4">
+                        <svg class="w-8 h-8 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                        </svg>
+                    </div>
+                    <h4 class="text-sm font-medium text-zinc-400 mb-2">Select a Document</h4>
+                    <p class="text-xs text-zinc-600 leading-relaxed max-w-xs">
+                        Choose a document from the sidebar to see its AI Twin — a structured, LLM-optimized version of your notes.
+                    </p>
+                </div>
+                
+                <div class="p-3 border-t border-zinc-800 bg-zinc-900/50">
+                    <div class="flex items-center gap-2 text-xs text-zinc-600">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <span>Powered by Claude Sonnet</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </main>
+
+    <script>
+        // ============================================
+        // MODAL SYSTEM
+        // ============================================
+        
+        let pendingDeleteUrl = null;
+        let pendingDeleteDocId = null;
+        
+        function showModal(modalId) {
+            const backdrop = document.getElementById('modal-backdrop');
+            const modal = document.getElementById(modalId);
+            
+            backdrop.classList.remove('hidden');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            // Trigger animation
+            requestAnimationFrame(() => {
+                backdrop.classList.add('opacity-100');
+                backdrop.classList.remove('opacity-0');
+                modal.querySelector('.modal-content').classList.add('scale-100', 'opacity-100');
+                modal.querySelector('.modal-content').classList.remove('scale-95', 'opacity-0');
+            });
+        }
+        
+        function hideModal(modalId) {
+            const backdrop = document.getElementById('modal-backdrop');
+            const modal = document.getElementById(modalId);
+            
+            backdrop.classList.remove('opacity-100');
+            backdrop.classList.add('opacity-0');
+            modal.querySelector('.modal-content').classList.remove('scale-100', 'opacity-100');
+            modal.querySelector('.modal-content').classList.add('scale-95', 'opacity-0');
+            
+            setTimeout(() => {
+                backdrop.classList.add('hidden');
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 200);
+        }
+        
+        // Delete Modal Functions
+        function showDeleteModal(docName, deleteUrl, docId) {
+            pendingDeleteUrl = deleteUrl;
+            pendingDeleteDocId = docId;
+            document.getElementById('delete-doc-name').textContent = docName;
+            showModal('delete-modal');
+        }
+        
+        function closeDeleteModal() {
+            hideModal('delete-modal');
+            pendingDeleteUrl = null;
+            pendingDeleteDocId = null;
+        }
+        
+        function confirmDelete() {
+            if (!pendingDeleteUrl) return;
+            
+            fetch(pendingDeleteUrl, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'HX-Request': 'true'
+                }
+            })
+            .then(response => response.text())
+            .then(html => {
+                document.getElementById('document-list').innerHTML = html;
+                closeDeleteModal();
+                showToast('Document deleted successfully', 'success');
+                initSortable();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showToast('Failed to delete document', 'error');
+            });
+        }
+        
+        // Set up confirm button
+        document.getElementById('confirm-delete-btn').addEventListener('click', confirmDelete);
+        
+        // Close modal on backdrop click
+        document.getElementById('modal-backdrop').addEventListener('click', function() {
+            closeDeleteModal();
+            closeLinkModal();
+        });
+        
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeDeleteModal();
+                closeLinkModal();
+            }
+        });
+        
+        // ============================================
+        // LINK MODAL FUNCTIONS
+        // ============================================
+        
+        function showLinkModal(previousUrl = '') {
+            document.getElementById('link-url-input').value = previousUrl || 'https://';
+            showModal('link-modal');
+            // Focus the input after animation
+            setTimeout(() => {
+                document.getElementById('link-url-input').focus();
+                document.getElementById('link-url-input').select();
+            }, 250);
+        }
+        
+        function closeLinkModal() {
+            hideModal('link-modal');
+        }
+        
+        function confirmLink() {
+            const url = document.getElementById('link-url-input').value;
+            
+            if (!url || url === 'https://') {
+                // Remove link if empty
+                if (window.editor) {
+                    window.editor.chain().focus().extendMarkRange('link').unsetLink().run();
+                }
+            } else {
+                // Set link
+                if (window.editor) {
+                    window.editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
+                }
+            }
+            
+            closeLinkModal();
+        }
+        
+        // Handle Enter key in link input
+        document.getElementById('link-url-input').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                confirmLink();
+            }
+        });
+        
+        // Global function for editor to call
+        window.openLinkModal = function(previousUrl) {
+            showLinkModal(previousUrl);
+        };
+        
+        // ============================================
+        // TOAST NOTIFICATIONS
+        // ============================================
+        
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            
+            const toast = document.createElement('div');
+            toast.className = `toast flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg transform translate-x-full opacity-0 transition-all duration-300 ${
+                type === 'success' ? 'bg-emerald-500/10 border border-emerald-500/20' : 
+                type === 'error' ? 'bg-red-500/10 border border-red-500/20' : 
+                'bg-zinc-800 border border-zinc-700'
+            }`;
+            
+            const iconColor = type === 'success' ? 'text-emerald-400' : type === 'error' ? 'text-red-400' : 'text-zinc-400';
+            const icon = type === 'success' 
+                ? `<svg class="w-5 h-5 ${iconColor}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                   </svg>`
+                : type === 'error'
+                ? `<svg class="w-5 h-5 ${iconColor}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                   </svg>`
+                : `<svg class="w-5 h-5 ${iconColor}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                   </svg>`;
+            
+            toast.innerHTML = `
+                ${icon}
+                <span class="text-sm font-medium text-zinc-200">${message}</span>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Trigger animation
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-x-full', 'opacity-0');
+                toast.classList.add('translate-x-0', 'opacity-100');
+            });
+            
+            // Remove after 4 seconds
+            setTimeout(() => {
+                toast.classList.add('translate-x-full', 'opacity-0');
+                toast.classList.remove('translate-x-0', 'opacity-100');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+        
+        // Make toast function globally available
+        window.showToast = showToast;
+        
+        // ============================================
+        // DRAG & DROP SORTABLE
+        // ============================================
+        
+        function initSortable() {
+            const documentList = document.getElementById('document-list');
+            if (!documentList || typeof Sortable === 'undefined') return;
+            
+            // Destroy existing sortable instances to prevent duplicates
+            if (documentList.sortableInstance) {
+                documentList.sortableInstance.destroy();
+            }
+            
+            // Initialize sortable for PARENT documents only
+            // This sorts the .parent-doc-container elements which contain both the parent and its children
+            documentList.sortableInstance = new Sortable(documentList, {
+                animation: 150,
+                handle: '.drag-handle',  // Only drag handles on parent items
+                draggable: '.parent-doc-container',  // Only drag parent containers
+                ghostClass: 'bg-indigo-500/20',
+                chosenClass: 'bg-zinc-700',
+                dragClass: 'opacity-50',
+                onEnd: function(evt) {
+                    // Get new order of PARENT document IDs only
+                    const parentContainers = documentList.querySelectorAll('.parent-doc-container');
+                    const order = Array.from(parentContainers).map(container => container.dataset.docId);
+                    
+                    // Send to server - only reordering parents
+                    fetch('{% url "reorder_documents" %}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        body: JSON.stringify({ order: order, parent_id: null })
+                    });
+                }
+            });
+            
+            // Initialize sortable for CHILD documents within each parent
+            const childLists = documentList.querySelectorAll('.child-doc-list');
+            childLists.forEach(childList => {
+                // Destroy existing instance if any
+                if (childList.sortableInstance) {
+                    childList.sortableInstance.destroy();
+                }
+                
+                const parentId = childList.dataset.parentId;
+                
+                childList.sortableInstance = new Sortable(childList, {
+                    animation: 150,
+                    handle: '.child-drag-handle',  // Only drag handles on child items
+                    draggable: '.child-doc',  // Only drag child documents
+                    ghostClass: 'bg-indigo-500/20',
+                    chosenClass: 'bg-zinc-700',
+                    dragClass: 'opacity-50',
+                    group: {
+                        name: 'children-' + parentId,  // Unique group per parent
+                        pull: false,  // Don't allow pulling out of this list
+                        put: false    // Don't allow putting into this list from outside
+                    },
+                    onEnd: function(evt) {
+                        // Get new order of child document IDs
+                        const childItems = childList.querySelectorAll('.child-doc');
+                        const order = Array.from(childItems).map(item => item.dataset.docId);
+                        
+                        // Send to server - reordering children within this parent
+                        fetch('{% url "reorder_documents" %}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': '{{ csrf_token }}'
+                            },
+                            body: JSON.stringify({ order: order, parent_id: parentId })
+                        });
+                    }
+                });
+            });
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', initSortable);
+        
+        // Re-initialize after HTMX swaps (when document list updates)
+        document.body.addEventListener('htmx:afterSwap', function(evt) {
+            if (evt.detail.target.id === 'document-list') {
+                initSortable();
+            }
+        });
+        
+        // ============================================
+        // RESIZABLE COLUMNS
+        // ============================================
+        
+        function initResizableColumns() {
+            const leftSidebar = document.getElementById('left-sidebar');
+            const aiColumn = document.getElementById('ai-column');
+            const resizeHandleLeft = document.getElementById('resize-handle-left');
+            const resizeHandleRight = document.getElementById('resize-handle-right');
+            
+            let isResizing = false;
+            let currentHandle = null;
+            let startX = 0;
+            let startWidth = 0;
+            
+            // Left sidebar resize
+            resizeHandleLeft.addEventListener('mousedown', function(e) {
+                isResizing = true;
+                currentHandle = 'left';
+                startX = e.clientX;
+                startWidth = leftSidebar.offsetWidth;
+                
+                document.body.classList.add('resizing');
+                resizeHandleLeft.classList.add('active');
+                e.preventDefault();
+            });
+            
+            // Right AI panel resize
+            resizeHandleRight.addEventListener('mousedown', function(e) {
+                isResizing = true;
+                currentHandle = 'right';
+                startX = e.clientX;
+                startWidth = aiColumn.offsetWidth;
+                
+                document.body.classList.add('resizing');
+                resizeHandleRight.classList.add('active');
+                e.preventDefault();
+            });
+            
+            // Mouse move handler
+            document.addEventListener('mousemove', function(e) {
+                if (!isResizing) return;
+                
+                if (currentHandle === 'left') {
+                    const delta = e.clientX - startX;
+                    let newWidth = startWidth + delta;
+                    
+                    // Apply min/max constraints
+                    newWidth = Math.max(200, Math.min(400, newWidth));
+                    leftSidebar.style.width = newWidth + 'px';
+                    
+                } else if (currentHandle === 'right') {
+                    // For right panel, dragging left increases width
+                    const delta = startX - e.clientX;
+                    let newWidth = startWidth + delta;
+                    
+                    // Apply min/max constraints
+                    newWidth = Math.max(280, Math.min(600, newWidth));
+                    aiColumn.style.width = newWidth + 'px';
+                }
+            });
+            
+            // Mouse up handler
+            document.addEventListener('mouseup', function() {
+                if (isResizing) {
+                    isResizing = false;
+                    currentHandle = null;
+                    document.body.classList.remove('resizing');
+                    resizeHandleLeft.classList.remove('active');
+                    resizeHandleRight.classList.remove('active');
+                    
+                    // Save widths to localStorage
+                    localStorage.setItem('pineback-left-sidebar-width', leftSidebar.style.width);
+                    localStorage.setItem('pineback-ai-column-width', aiColumn.style.width);
+                }
+            });
+            
+            // Restore saved widths from localStorage
+            const savedLeftWidth = localStorage.getItem('pineback-left-sidebar-width');
+            const savedAiWidth = localStorage.getItem('pineback-ai-column-width');
+            
+            if (savedLeftWidth) {
+                leftSidebar.style.width = savedLeftWidth;
+            }
+            if (savedAiWidth) {
+                aiColumn.style.width = savedAiWidth;
+            }
+            
+            // Double-click to reset to default
+            resizeHandleLeft.addEventListener('dblclick', function() {
+                leftSidebar.style.width = '256px';
+                localStorage.setItem('pineback-left-sidebar-width', '256px');
+            });
+            
+            resizeHandleRight.addEventListener('dblclick', function() {
+                aiColumn.style.width = '384px';
+                localStorage.setItem('pineback-ai-column-width', '384px');
+            });
+        }
+        
+        // Initialize resizable columns on page load
+        document.addEventListener('DOMContentLoaded', initResizableColumns);
+    </script>
+</body>
+</html>
+

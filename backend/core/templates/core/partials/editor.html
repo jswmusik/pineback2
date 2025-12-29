@@ -1,0 +1,1188 @@
+<!-- Editor Container -->
+<div id="editor-container" class="flex flex-col h-full relative">
+
+    <!-- Title Section -->
+    <div class="p-6 border-b border-zinc-800">
+        <input type="text" 
+               id="doc-title"
+               value="{{ doc.title }}" 
+               placeholder="Untitled Document"
+               class="w-full bg-transparent text-2xl font-semibold placeholder-zinc-600 focus:outline-none focus:placeholder-zinc-500 transition-colors text-zinc-100">
+        <div class="flex items-center gap-4 mt-3 text-xs text-zinc-500">
+            <span class="flex items-center gap-1.5">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span id="save-status">Auto-saves as you type</span>
+            </span>
+            <span class="flex items-center gap-3">
+                <span class="text-xs text-emerald-500 opacity-0 transition-opacity" id="saved-indicator">
+                    <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Saved
+                </span>
+                <span class="text-xs text-zinc-600 mono" id="word-count">0 words</span>
+            </span>
+        </div>
+    </div>
+
+    <!-- Fixed Toolbar -->
+    <div id="toolbar" class="border-b border-zinc-800 p-2 flex flex-wrap gap-1 bg-zinc-900/50">
+        <div class="flex items-center gap-1 pr-3 border-r border-zinc-700">
+            <button onclick="window.editor?.chain().focus().toggleBold().run()" 
+                    class="toolbar-btn p-2 hover:bg-zinc-700 rounded-lg transition-colors" title="Bold (Ctrl+B)">
+                <svg class="w-4 h-4 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 12h8a4 4 0 100-8H6v8zm0 0h9a4 4 0 110 8H6v-8z"/>
+                </svg>
+            </button>
+            <button onclick="window.editor?.chain().focus().toggleItalic().run()" 
+                    class="toolbar-btn p-2 hover:bg-zinc-700 rounded-lg transition-colors" title="Italic (Ctrl+I)">
+                <svg class="w-4 h-4 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 4h4m-2 0v16m-4 0h8"/>
+                </svg>
+            </button>
+            <button onclick="window.editor?.chain().focus().toggleUnderline?.().run()" 
+                    class="toolbar-btn p-2 hover:bg-zinc-700 rounded-lg transition-colors" title="Underline (Ctrl+U)">
+                <svg class="w-4 h-4 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v7a5 5 0 0010 0V4M5 21h14"/>
+                </svg>
+            </button>
+            <button onclick="window.editor?.chain().focus().toggleStrike().run()" 
+                    class="toolbar-btn p-2 hover:bg-zinc-700 rounded-lg transition-colors" title="Strikethrough">
+                <svg class="w-4 h-4 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 10H7m10 4H7m5-8v12M4 12h16"/>
+                </svg>
+            </button>
+            <button onclick="window.editor?.chain().focus().toggleCode().run()" 
+                    class="toolbar-btn p-2 hover:bg-zinc-700 rounded-lg transition-colors" title="Inline Code">
+                <svg class="w-4 h-4 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="flex items-center gap-1 px-3 border-r border-zinc-700">
+            <button onclick="window.editor?.chain().focus().toggleHeading({ level: 1 }).run()" 
+                    class="toolbar-btn px-2 py-1 hover:bg-zinc-700 rounded-lg transition-colors text-sm font-semibold text-zinc-300" title="Heading 1">
+                H1
+            </button>
+            <button onclick="window.editor?.chain().focus().toggleHeading({ level: 2 }).run()" 
+                    class="toolbar-btn px-2 py-1 hover:bg-zinc-700 rounded-lg transition-colors text-sm font-semibold text-zinc-300" title="Heading 2">
+                H2
+            </button>
+            <button onclick="window.editor?.chain().focus().toggleHeading({ level: 3 }).run()" 
+                    class="toolbar-btn px-2 py-1 hover:bg-zinc-700 rounded-lg transition-colors text-sm font-semibold text-zinc-300" title="Heading 3">
+                H3
+            </button>
+        </div>
+        
+        <div class="flex items-center gap-1 px-3 border-r border-zinc-700">
+            <button onclick="window.editor?.chain().focus().toggleBulletList().run()" 
+                    class="toolbar-btn p-2 hover:bg-zinc-700 rounded-lg transition-colors" title="Bullet List">
+                <svg class="w-4 h-4 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16M4 6h.01M4 12h.01M4 18h.01"/>
+                </svg>
+            </button>
+            <button onclick="window.editor?.chain().focus().toggleOrderedList().run()" 
+                    class="toolbar-btn p-2 hover:bg-zinc-700 rounded-lg transition-colors" title="Numbered List">
+                <svg class="w-4 h-4 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h10M7 16h10M3 8h.01M3 12h.01M3 16h.01"/>
+                </svg>
+            </button>
+            <button onclick="window.editor?.chain().focus().toggleBlockquote().run()" 
+                    class="toolbar-btn p-2 hover:bg-zinc-700 rounded-lg transition-colors" title="Quote">
+                <svg class="w-4 h-4 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="flex items-center gap-1 px-3 border-r border-zinc-700">
+            <button onclick="window.openLinkModal?.(window.editor?.getAttributes('link').href)" 
+                    class="toolbar-btn p-2 hover:bg-zinc-700 rounded-lg transition-colors" title="Add Link">
+                <svg class="w-4 h-4 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                </svg>
+            </button>
+            <button onclick="window.editor?.chain().focus().toggleHighlight?.().run()" 
+                    class="toolbar-btn p-2 hover:bg-zinc-700 rounded-lg transition-colors" title="Highlight">
+                <svg class="w-4 h-4 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="flex items-center gap-1 pl-3">
+            <button onclick="window.editor?.chain().focus().toggleCodeBlock().run()" 
+                    class="toolbar-btn p-2 hover:bg-zinc-700 rounded-lg transition-colors" title="Code Block">
+                <svg class="w-4 h-4 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+            </button>
+            <button onclick="window.editor?.chain().focus().setHorizontalRule().run()" 
+                    class="toolbar-btn p-2 hover:bg-zinc-700 rounded-lg transition-colors" title="Horizontal Rule">
+                <svg class="w-4 h-4 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14"/>
+                </svg>
+            </button>
+            <button onclick="window.editor?.chain().focus().undo().run()" 
+                    class="toolbar-btn p-2 hover:bg-zinc-700 rounded-lg transition-colors ml-2" title="Undo (Ctrl+Z)">
+                <svg class="w-4 h-4 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/>
+                </svg>
+            </button>
+            <button onclick="window.editor?.chain().focus().redo().run()" 
+                    class="toolbar-btn p-2 hover:bg-zinc-700 rounded-lg transition-colors" title="Redo (Ctrl+Y)">
+                <svg class="w-4 h-4 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10h-10a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Floating Bubble Menu (appears on text selection) -->
+    <div id="bubble-menu" class="bubble-menu">
+        <button onclick="window.editor?.chain().focus().toggleHeading({ level: 1 }).run()" class="bubble-btn" title="Heading 1">
+            <span class="text-xs font-bold">H1</span>
+        </button>
+        <button onclick="window.editor?.chain().focus().toggleHeading({ level: 2 }).run()" class="bubble-btn" title="Heading 2">
+            <span class="text-xs font-bold">H2</span>
+        </button>
+        <button onclick="window.editor?.chain().focus().toggleHeading({ level: 3 }).run()" class="bubble-btn" title="Heading 3">
+            <span class="text-xs font-bold">H3</span>
+        </button>
+        <div class="bubble-divider"></div>
+        <button onclick="window.editor?.chain().focus().toggleBold().run()" class="bubble-btn" title="Bold">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 12h8a4 4 0 100-8H6v8zm0 0h9a4 4 0 110 8H6v-8z"/>
+            </svg>
+        </button>
+        <button onclick="window.editor?.chain().focus().toggleItalic().run()" class="bubble-btn" title="Italic">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 4h4m-2 0v16m-4 0h8"/>
+            </svg>
+        </button>
+        <button onclick="window.editor?.chain().focus().toggleUnderline?.().run()" class="bubble-btn" title="Underline">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 4v7a5 5 0 0010 0V4M5 21h14"/>
+            </svg>
+        </button>
+        <button onclick="window.editor?.chain().focus().toggleStrike().run()" class="bubble-btn" title="Strikethrough">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 10H7m10 4H7m5-8v12M4 12h16"/>
+            </svg>
+        </button>
+        <div class="bubble-divider"></div>
+        <button onclick="window.openLinkModal?.(window.editor?.getAttributes('link').href)" class="bubble-btn" title="Link">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+            </svg>
+        </button>
+        <button onclick="window.editor?.chain().focus().toggleCode().run()" class="bubble-btn" title="Code">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/>
+            </svg>
+        </button>
+        <button onclick="window.editor?.chain().focus().toggleHighlight?.().run()" class="bubble-btn" title="Highlight">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+            </svg>
+        </button>
+        <div class="bubble-divider"></div>
+        <!-- AI Assist Button -->
+        <button onclick="window.openAIAssist?.()" class="bubble-btn ai-assist-btn" title="Ask AI (Ctrl+J)">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+            </svg>
+        </button>
+    </div>
+
+    <!-- AI Assist Panel (appears when AI button clicked) -->
+    <div id="ai-assist-panel" class="ai-assist-panel">
+        <div class="ai-assist-header">
+            <div class="flex items-center gap-2">
+                <div class="w-6 h-6 rounded-lg bg-gradient-to-br from-violet-500/30 to-indigo-500/30 flex items-center justify-center">
+                    <svg class="w-3.5 h-3.5 text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                    </svg>
+                </div>
+                <span class="text-sm font-medium text-zinc-200">AI Assistant</span>
+            </div>
+            <button onclick="window.closeAIAssist?.()" class="text-zinc-500 hover:text-zinc-300 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="ai-assist-selected">
+            <span class="text-xs text-zinc-500 mb-1 block">Selected text:</span>
+            <div id="ai-selected-text" class="text-xs text-zinc-400 line-clamp-2"></div>
+        </div>
+        
+        <div class="ai-assist-input-wrapper">
+            <input type="text" 
+                   id="ai-assist-input" 
+                   placeholder="Ask AI to improve, explain, translate..."
+                   class="ai-assist-input">
+            <button onclick="window.sendAIAssist?.()" id="ai-send-btn" class="ai-send-btn">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="ai-quick-actions">
+            <button onclick="window.quickAIAction?.('Improve this text - make it clearer and more professional')" class="ai-quick-btn">✨ Improve</button>
+            <button onclick="window.quickAIAction?.('Fix grammar and spelling')" class="ai-quick-btn">📝 Fix Grammar</button>
+            <button onclick="window.quickAIAction?.('Make this text shorter and more concise')" class="ai-quick-btn">📐 Shorten</button>
+            <button onclick="window.quickAIAction?.('Expand on this idea with more detail')" class="ai-quick-btn">📖 Expand</button>
+            <button onclick="window.quickAIAction?.('Explain what this means')" class="ai-quick-btn">💡 Explain</button>
+        </div>
+        
+        <!-- AI Response Area -->
+        <div id="ai-response-area" class="ai-response-area hidden">
+            <div id="ai-response-loading" class="ai-loading hidden">
+                <svg class="w-5 h-5 animate-spin text-violet-400" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="text-xs text-zinc-400">Claude is thinking...</span>
+            </div>
+            <div id="ai-response-content" class="ai-response-content"></div>
+            
+            <!-- Actions for when there's a suggested replacement -->
+            <div id="ai-suggestion-actions" class="ai-suggestion-actions hidden">
+                <button onclick="window.applyAISuggestion?.()" class="ai-apply-btn">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                    </svg>
+                    Replace Text
+                </button>
+                <button onclick="window.insertAIResponse?.()" class="ai-insert-btn">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m0 0l-4-4m4 4l4-4"/>
+                    </svg>
+                    Insert Below
+                </button>
+                <button onclick="window.discardAISuggestion?.()" class="ai-discard-btn">
+                    ✕
+                </button>
+            </div>
+            
+            <!-- Actions for general responses (no replacement, just insert option) -->
+            <div id="ai-response-actions" class="ai-response-actions hidden">
+                <button onclick="window.insertAIResponse?.()" class="ai-insert-btn flex-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m0 0l-4-4m4 4l4-4"/>
+                    </svg>
+                    Insert Response Below
+                </button>
+                <button onclick="window.copyAIResponse?.()" class="ai-copy-btn">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                    </svg>
+                    Copy
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tiptap Editor Area -->
+    <div class="flex-1 overflow-y-auto scrollbar-thin">
+        <div id="tiptap-editor" class="prose prose-invert prose-zinc max-w-none p-8 min-h-full focus:outline-none">
+            <!-- Tiptap will render here -->
+        </div>
+    </div>
+
+    <!-- Hidden form for HTMX auto-save with OOB sidebar sync -->
+    <form id="save-form" 
+          hx-post="{% url 'update_document' doc.id %}" 
+          hx-trigger="save-event" 
+          hx-swap="none"
+          hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+        <input type="hidden" name="content" id="hidden-content">
+        <input type="hidden" name="title" id="hidden-title" value="{{ doc.title }}">
+    </form>
+
+</div>
+
+<script type="module">
+    import { Editor } from 'https://esm.sh/@tiptap/core@2.1.13'
+    import StarterKit from 'https://esm.sh/@tiptap/starter-kit@2.1.13'
+    import Placeholder from 'https://esm.sh/@tiptap/extension-placeholder@2.1.13'
+    import Underline from 'https://esm.sh/@tiptap/extension-underline@2.1.13'
+    import Link from 'https://esm.sh/@tiptap/extension-link@2.1.13'
+    import Highlight from 'https://esm.sh/@tiptap/extension-highlight@2.1.13'
+
+    const bubbleMenu = document.querySelector('#bubble-menu');
+    
+    // Debounce function for auto-save
+    let saveTimeout;
+    function debounceSave() {
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(() => {
+            const saveForm = document.querySelector('#save-form');
+            if (saveForm) {
+                saveForm.dispatchEvent(new Event('save-event'));
+            }
+        }, 1000);
+    }
+
+    // Custom bubble menu positioning
+    function updateBubbleMenu() {
+        const { state, view } = window.editor;
+        const { from, to, empty } = state.selection;
+        
+        if (empty || from === to) {
+            bubbleMenu.classList.remove('visible');
+            return;
+        }
+        
+        // Get the coordinates of the selection
+        const start = view.coordsAtPos(from);
+        const end = view.coordsAtPos(to);
+        
+        // Calculate position (center above selection)
+        const left = (start.left + end.left) / 2;
+        const top = start.top - 10;
+        
+        // Get editor container for relative positioning
+        const editorContainer = document.querySelector('#editor-container');
+        const containerRect = editorContainer.getBoundingClientRect();
+        
+        // Position the bubble menu
+        const menuWidth = bubbleMenu.offsetWidth;
+        let menuLeft = left - containerRect.left - (menuWidth / 2);
+        
+        // Keep menu within bounds
+        menuLeft = Math.max(10, Math.min(menuLeft, containerRect.width - menuWidth - 10));
+        
+        bubbleMenu.style.left = `${menuLeft}px`;
+        bubbleMenu.style.top = `${top - containerRect.top - bubbleMenu.offsetHeight}px`;
+        bubbleMenu.classList.add('visible');
+    }
+
+    // Initialize the Tiptap Editor
+    window.editor = new Editor({
+        element: document.querySelector('#tiptap-editor'),
+        extensions: [
+            StarterKit.configure({
+                heading: {
+                    levels: [1, 2, 3],
+                },
+            }),
+            Underline,
+            Link.configure({
+                openOnClick: false,
+                HTMLAttributes: {
+                    class: 'text-indigo-400 underline hover:text-indigo-300',
+                },
+            }),
+            Highlight.configure({
+                HTMLAttributes: {
+                    class: 'bg-yellow-500/30 rounded px-0.5',
+                },
+            }),
+            Placeholder.configure({
+                placeholder: 'Start writing your feature specification...',
+            }),
+        ],
+        content: `{{ doc.content|escapejs }}`,
+        editorProps: {
+            attributes: {
+                class: 'focus:outline-none min-h-[400px]',
+            },
+        },
+        onUpdate({ editor }) {
+            // Update hidden form field with HTML content
+            const html = editor.getHTML();
+            document.querySelector('#hidden-content').value = html;
+            
+            // Update word count
+            const text = editor.getText();
+            const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+            const wordCountEl = document.querySelector('#word-count');
+            if (wordCountEl) {
+                wordCountEl.textContent = words + ' word' + (words !== 1 ? 's' : '');
+            }
+            
+            // Trigger debounced save
+            debounceSave();
+        },
+        onSelectionUpdate({ editor }) {
+            // Update bubble menu position
+            updateBubbleMenu();
+        },
+        onBlur() {
+            // Hide bubble menu when editor loses focus (with small delay for button clicks)
+            setTimeout(() => {
+                if (!document.activeElement?.closest('#bubble-menu')) {
+                    bubbleMenu.classList.remove('visible');
+                }
+            }, 150);
+        },
+    });
+
+    // Title input auto-save
+    const titleInput = document.querySelector('#doc-title');
+    if (titleInput) {
+        titleInput.addEventListener('input', () => {
+            document.querySelector('#hidden-title').value = titleInput.value;
+            debounceSave();
+        });
+    }
+
+    // Show saved indicator after HTMX request
+    document.body.addEventListener('htmx:afterRequest', function(evt) {
+        if (evt.detail.successful && evt.detail.elt.id === 'save-form') {
+            const savedIndicator = document.querySelector('#saved-indicator');
+            if (savedIndicator) {
+                savedIndicator.style.opacity = '1';
+                setTimeout(() => {
+                    savedIndicator.style.opacity = '0';
+                }, 2000);
+            }
+        }
+    });
+
+    // Keep bubble menu visible when clicking its buttons
+    bubbleMenu.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+    });
+
+    // ============================================
+    // AI ASSIST FUNCTIONALITY
+    // ============================================
+    
+    const aiAssistPanel = document.querySelector('#ai-assist-panel');
+    const aiAssistInput = document.querySelector('#ai-assist-input');
+    const aiSelectedText = document.querySelector('#ai-selected-text');
+    const aiResponseArea = document.querySelector('#ai-response-area');
+    const aiResponseLoading = document.querySelector('#ai-response-loading');
+    const aiResponseContent = document.querySelector('#ai-response-content');
+    const aiSuggestionActions = document.querySelector('#ai-suggestion-actions');
+    const aiResponseActions = document.querySelector('#ai-response-actions');
+    
+    // Store AI assist state globally on window to prevent scope issues
+    window.aiAssistState = {
+        selectedText: '',
+        selectionFrom: 0,
+        selectionTo: 0,
+        suggestedText: null,
+        lastResponse: ''  // Store the full AI response for inserting
+    };
+    
+    // Open AI Assist Panel
+    window.openAIAssist = function() {
+        const { state, view } = window.editor;
+        const { from, to, empty } = state.selection;
+        
+        if (empty || from === to) {
+            window.showToast?.('Please select some text first', 'error');
+            return;
+        }
+        
+        // Store selection info globally
+        window.aiAssistState.selectedText = state.doc.textBetween(from, to, ' ');
+        window.aiAssistState.selectionFrom = from;
+        window.aiAssistState.selectionTo = to;
+        window.aiAssistState.suggestedText = null;
+        
+        console.log('AI Assist opened with selection:', window.aiAssistState);
+        
+        // Update panel with selected text
+        aiSelectedText.textContent = window.aiAssistState.selectedText.length > 100 
+            ? window.aiAssistState.selectedText.substring(0, 100) + '...' 
+            : window.aiAssistState.selectedText;
+        
+        // Position the panel near the selection
+        const start = view.coordsAtPos(from);
+        const editorContainer = document.querySelector('#editor-container');
+        const containerRect = editorContainer.getBoundingClientRect();
+        
+        const panelWidth = 340;
+        let left = start.left - containerRect.left;
+        left = Math.max(10, Math.min(left, containerRect.width - panelWidth - 10));
+        
+        aiAssistPanel.style.left = `${left}px`;
+        aiAssistPanel.style.top = `${start.top - containerRect.top + 30}px`;
+        
+        // Show panel
+        aiAssistPanel.classList.add('visible');
+        bubbleMenu.classList.remove('visible');
+        
+        // Reset response area
+        aiResponseArea.classList.add('hidden');
+        aiResponseContent.innerHTML = '';
+        aiSuggestionActions.classList.add('hidden');
+        aiResponseActions?.classList.add('hidden');
+        window.aiAssistState.suggestedText = null;
+        window.aiAssistState.lastResponse = '';
+        
+        // Focus input
+        setTimeout(() => aiAssistInput.focus(), 100);
+    };
+    
+    // Close AI Assist Panel
+    window.closeAIAssist = function() {
+        aiAssistPanel.classList.remove('visible');
+        aiAssistInput.value = '';
+    };
+    
+    // Send AI Assist Request
+    window.sendAIAssist = async function() {
+        const prompt = aiAssistInput.value.trim();
+        if (!prompt) return;
+        
+        // Show loading
+        aiResponseArea.classList.remove('hidden');
+        aiResponseLoading.classList.remove('hidden');
+        aiResponseContent.innerHTML = '';
+        aiSuggestionActions.classList.add('hidden');
+        aiResponseActions?.classList.add('hidden');
+        
+        try {
+            const response = await fetch('/ai-assist/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    selected_text: window.aiAssistState.selectedText,
+                    prompt: prompt,
+                    full_context: window.editor?.getText() || ''
+                })
+            });
+            
+            const data = await response.json();
+            console.log('AI Response:', data);
+            
+            // Hide loading
+            aiResponseLoading.classList.add('hidden');
+            
+            if (data.error) {
+                aiResponseContent.innerHTML = `<div class="text-red-400 text-xs">${data.error}</div>`;
+                return;
+            }
+            
+            // Store the response for potential insertion
+            window.aiAssistState.lastResponse = data.response;
+            
+            // Show response
+            aiResponseContent.innerHTML = `<div class="text-zinc-300 text-xs leading-relaxed whitespace-pre-wrap">${data.response}</div>`;
+            
+            // If there's a suggested replacement, show the replace/insert buttons
+            if (data.suggested_text) {
+                window.aiAssistState.suggestedText = data.suggested_text;
+                aiSuggestionActions.classList.remove('hidden');
+                aiResponseActions?.classList.add('hidden');
+                
+                console.log('Suggested text stored:', window.aiAssistState.suggestedText);
+                
+                // Show preview of suggested text
+                aiResponseContent.innerHTML += `
+                    <div class="mt-3 p-2 bg-violet-500/10 border border-violet-500/30 rounded-lg">
+                        <span class="text-xs text-violet-400 block mb-1">Suggested replacement:</span>
+                        <div class="text-xs text-zinc-200">${window.aiAssistState.suggestedText}</div>
+                    </div>
+                `;
+            } else {
+                // No suggested text - show insert/copy buttons for general responses
+                aiSuggestionActions.classList.add('hidden');
+                aiResponseActions?.classList.remove('hidden');
+            }
+            
+        } catch (error) {
+            aiResponseLoading.classList.add('hidden');
+            aiResponseContent.innerHTML = `<div class="text-red-400 text-xs">Error: ${error.message}</div>`;
+        }
+    };
+    
+    // Quick AI Actions
+    window.quickAIAction = function(prompt) {
+        aiAssistInput.value = prompt;
+        window.sendAIAssist();
+    };
+    
+    // Apply AI Suggestion
+    window.applyAISuggestion = function() {
+        const { suggestedText, selectionFrom, selectionTo } = window.aiAssistState;
+        
+        console.log('Applying suggestion:', { suggestedText, selectionFrom, selectionTo });
+        
+        if (!suggestedText) {
+            console.error('No suggested text to apply');
+            window.showToast?.('No suggestion to apply', 'error');
+            return;
+        }
+        
+        if (!window.editor) {
+            console.error('Editor not found');
+            window.showToast?.('Editor not found', 'error');
+            return;
+        }
+        
+        try {
+            // First, focus the editor
+            window.editor.commands.focus();
+            
+            // Set the selection to the original range
+            window.editor.commands.setTextSelection({ from: selectionFrom, to: selectionTo });
+            
+            // Delete the selected content and insert new text
+            window.editor
+                .chain()
+                .deleteSelection()
+                .insertContent(suggestedText)
+                .run();
+            
+            console.log('Text replaced successfully');
+            
+            // Close panel and show success
+            window.closeAIAssist();
+            window.showToast?.('Text replaced successfully!', 'success');
+            
+            // Trigger save
+            debounceSave();
+        } catch (error) {
+            console.error('Error applying suggestion:', error);
+            window.showToast?.('Failed to apply change: ' + error.message, 'error');
+        }
+    };
+    
+    // Discard AI Suggestion
+    window.discardAISuggestion = function() {
+        window.aiAssistState.suggestedText = null;
+        window.aiAssistState.lastResponse = '';
+        aiSuggestionActions.classList.add('hidden');
+        aiResponseActions?.classList.add('hidden');
+        window.closeAIAssist();
+    };
+    
+    // Insert AI Response below the selected text
+    window.insertAIResponse = function() {
+        const { selectionTo, suggestedText, lastResponse } = window.aiAssistState;
+        
+        // Use suggested text if available, otherwise use the full response
+        const textToInsert = suggestedText || lastResponse;
+        
+        console.log('Inserting response at position:', selectionTo, 'Text:', textToInsert?.substring(0, 50) + '...');
+        
+        if (!textToInsert) {
+            console.error('No text to insert');
+            window.showToast?.('No response to insert', 'error');
+            return;
+        }
+        
+        if (!window.editor) {
+            console.error('Editor not found');
+            window.showToast?.('Editor not found', 'error');
+            return;
+        }
+        
+        try {
+            // Focus the editor and move cursor to end of selection
+            window.editor.commands.focus();
+            window.editor.commands.setTextSelection(selectionTo);
+            
+            // Insert a new paragraph with the AI response
+            window.editor
+                .chain()
+                .insertContent('<p></p><p>' + textToInsert + '</p>')
+                .run();
+            
+            console.log('Response inserted successfully');
+            
+            // Close panel and show success
+            window.closeAIAssist();
+            window.showToast?.('Response inserted!', 'success');
+            
+            // Trigger save
+            debounceSave();
+        } catch (error) {
+            console.error('Error inserting response:', error);
+            window.showToast?.('Failed to insert: ' + error.message, 'error');
+        }
+    };
+    
+    // Copy AI Response to clipboard
+    window.copyAIResponse = function() {
+        const { suggestedText, lastResponse } = window.aiAssistState;
+        const textToCopy = suggestedText || lastResponse;
+        
+        if (!textToCopy) {
+            window.showToast?.('No response to copy', 'error');
+            return;
+        }
+        
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            window.showToast?.('Copied to clipboard!', 'success');
+        }).catch(err => {
+            console.error('Failed to copy:', err);
+            window.showToast?.('Failed to copy', 'error');
+        });
+    };
+    
+    // Handle Enter key in input
+    aiAssistInput?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            window.sendAIAssist();
+        }
+        if (e.key === 'Escape') {
+            window.closeAIAssist();
+        }
+    });
+    
+    // Keyboard shortcut: Ctrl+J to open AI assist
+    document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'j') {
+            e.preventDefault();
+            const { state } = window.editor || {};
+            if (state && !state.selection.empty) {
+                window.openAIAssist();
+            }
+        }
+    });
+    
+    // Keep AI panel open when clicking inside it
+    aiAssistPanel?.addEventListener('mousedown', (e) => {
+        e.stopPropagation();
+    });
+</script>
+
+<style>
+    /* Tiptap Editor Styling */
+    .tiptap {
+        outline: none;
+    }
+    
+    .tiptap p.is-editor-empty:first-child::before {
+        color: #52525b;
+        content: attr(data-placeholder);
+        float: left;
+        height: 0;
+        pointer-events: none;
+        white-space: pre-wrap;
+    }
+    
+    .tiptap h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: #f4f4f5;
+        line-height: 1.2;
+    }
+    
+    .tiptap h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        margin-top: 1.5rem;
+        color: #e4e4e7;
+        line-height: 1.3;
+    }
+    
+    .tiptap h3 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        margin-top: 1.25rem;
+        color: #d4d4d8;
+    }
+    
+    .tiptap p {
+        margin-bottom: 1rem;
+        line-height: 1.7;
+        color: #a1a1aa;
+    }
+    
+    .tiptap ul, .tiptap ol {
+        padding-left: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .tiptap ul {
+        list-style-type: disc;
+    }
+    
+    .tiptap ol {
+        list-style-type: decimal;
+    }
+    
+    .tiptap li {
+        margin-bottom: 0.25rem;
+        color: #a1a1aa;
+    }
+    
+    .tiptap li p {
+        margin-bottom: 0.25rem;
+    }
+    
+    .tiptap blockquote {
+        border-left: 3px solid #6366f1;
+        padding-left: 1rem;
+        margin: 1rem 0;
+        color: #71717a;
+        font-style: italic;
+    }
+    
+    .tiptap code {
+        background: #27272a;
+        color: #a78bfa;
+        padding: 0.2rem 0.4rem;
+        border-radius: 0.25rem;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.875em;
+    }
+    
+    .tiptap pre {
+        background: #18181b;
+        border: 1px solid #27272a;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        overflow-x: auto;
+    }
+    
+    .tiptap pre code {
+        background: none;
+        padding: 0;
+        color: #d4d4d8;
+    }
+    
+    .tiptap hr {
+        border: none;
+        border-top: 1px solid #27272a;
+        margin: 2rem 0;
+    }
+    
+    .tiptap strong {
+        color: #f4f4f5;
+        font-weight: 600;
+    }
+    
+    .tiptap em {
+        color: #d4d4d8;
+    }
+    
+    .tiptap s {
+        color: #71717a;
+    }
+    
+    .tiptap u {
+        text-decoration: underline;
+        text-underline-offset: 2px;
+    }
+    
+    /* Active toolbar button state */
+    .toolbar-btn.is-active {
+        background: #3f3f46;
+        color: #a78bfa;
+    }
+    
+    /* Bubble Menu Styling - Custom positioned floating toolbar */
+    .bubble-menu {
+        position: absolute;
+        background: linear-gradient(180deg, #27272a 0%, #1f1f23 100%);
+        border: 1px solid #3f3f46;
+        border-radius: 10px;
+        padding: 6px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(5px);
+        transition: opacity 0.15s ease, visibility 0.15s ease, transform 0.15s ease;
+        pointer-events: none;
+    }
+    
+    .bubble-menu.visible {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+        pointer-events: auto;
+    }
+    
+    .bubble-btn {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+        color: #a1a1aa;
+        transition: all 0.15s ease;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+    }
+    
+    .bubble-btn:hover {
+        background: #3f3f46;
+        color: #f4f4f5;
+    }
+    
+    .bubble-btn.is-active {
+        background: #6366f1;
+        color: #ffffff;
+    }
+    
+    .bubble-btn.is-active:hover {
+        background: #4f46e5;
+    }
+    
+    .bubble-divider {
+        width: 1px;
+        height: 20px;
+        background: #3f3f46;
+        margin: 0 4px;
+    }
+    
+    /* AI Assist Button in Bubble Menu */
+    .ai-assist-btn {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(99, 102, 241, 0.2)) !important;
+        border: 1px solid rgba(139, 92, 246, 0.3) !important;
+    }
+    
+    .ai-assist-btn:hover {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(99, 102, 241, 0.3)) !important;
+        color: #a78bfa !important;
+    }
+    
+    /* AI Assist Panel */
+    .ai-assist-panel {
+        position: absolute;
+        width: 340px;
+        background: linear-gradient(180deg, #1f1f23 0%, #18181b 100%);
+        border: 1px solid #3f3f46;
+        border-radius: 12px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
+        z-index: 1001;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(10px) scale(0.95);
+        transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+        overflow: hidden;
+    }
+    
+    .ai-assist-panel.visible {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0) scale(1);
+    }
+    
+    .ai-assist-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 14px;
+        border-bottom: 1px solid #27272a;
+        background: rgba(139, 92, 246, 0.05);
+    }
+    
+    .ai-assist-selected {
+        padding: 10px 14px;
+        border-bottom: 1px solid #27272a;
+        background: #18181b;
+    }
+    
+    .ai-assist-input-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 14px;
+        border-bottom: 1px solid #27272a;
+    }
+    
+    .ai-assist-input {
+        flex: 1;
+        background: #27272a;
+        border: 1px solid #3f3f46;
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 13px;
+        color: #f4f4f5;
+        outline: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .ai-assist-input:focus {
+        border-color: #8b5cf6;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+    }
+    
+    .ai-assist-input::placeholder {
+        color: #52525b;
+    }
+    
+    .ai-send-btn {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #8b5cf6, #6366f1);
+        border: none;
+        border-radius: 8px;
+        color: white;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    
+    .ai-send-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+    }
+    
+    .ai-quick-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 10px 14px;
+        border-bottom: 1px solid #27272a;
+    }
+    
+    .ai-quick-btn {
+        padding: 5px 10px;
+        font-size: 11px;
+        background: #27272a;
+        border: 1px solid #3f3f46;
+        border-radius: 6px;
+        color: #a1a1aa;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+    
+    .ai-quick-btn:hover {
+        background: #3f3f46;
+        color: #f4f4f5;
+        border-color: #52525b;
+    }
+    
+    .ai-response-area {
+        padding: 14px;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    
+    .ai-loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 20px;
+    }
+    
+    .ai-response-content {
+        margin-bottom: 10px;
+    }
+    
+    .ai-suggestion-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+    }
+    
+    .ai-apply-btn {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 8px 12px;
+        font-size: 12px;
+        font-weight: 500;
+        background: linear-gradient(135deg, #10b981, #059669);
+        border: none;
+        border-radius: 6px;
+        color: white;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    
+    .ai-apply-btn:hover {
+        transform: scale(1.02);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    }
+    
+    .ai-discard-btn {
+        padding: 8px 12px;
+        font-size: 12px;
+        background: transparent;
+        border: 1px solid #3f3f46;
+        border-radius: 6px;
+        color: #71717a;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+    
+    .ai-discard-btn:hover {
+        background: #27272a;
+        color: #a1a1aa;
+    }
+    
+    /* Insert button style */
+    .ai-insert-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 8px 12px;
+        font-size: 12px;
+        font-weight: 500;
+        background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        border: none;
+        border-radius: 6px;
+        color: white;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    
+    .ai-insert-btn:hover {
+        transform: scale(1.02);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    }
+    
+    /* Copy button style */
+    .ai-copy-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 8px 12px;
+        font-size: 12px;
+        background: #27272a;
+        border: 1px solid #3f3f46;
+        border-radius: 6px;
+        color: #a1a1aa;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+    
+    .ai-copy-btn:hover {
+        background: #3f3f46;
+        color: #f4f4f5;
+    }
+    
+    /* Response actions container */
+    .ai-response-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+    }
+    
+    /* Line clamp utility */
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+</style>

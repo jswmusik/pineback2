@@ -1,0 +1,106 @@
+{% for doc in documents %}
+<!-- Parent document container - this is what gets sorted -->
+<div class="parent-doc-container" data-doc-id="{{ doc.id }}">
+    <li class="tree-item group flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-colors border-l-2 border-transparent hover:border-indigo-500"
+        id="doc-item-{{ doc.id }}"
+        hx-get="{% url 'get_document' doc.id %}"
+        hx-target="#editor-content"
+        hx-swap="innerHTML">
+        
+        <!-- Drag handle for parent -->
+        <div class="drag-handle opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing mr-1 text-zinc-600 hover:text-zinc-400 transition-all"
+             onclick="event.stopPropagation();">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/>
+            </svg>
+        </div>
+        
+        <!-- Document icon and name -->
+        <div class="flex items-center gap-2 flex-1 min-w-0">
+            <svg class="w-4 h-4 text-indigo-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <span class="text-sm text-zinc-300 truncate">{{ doc.title }}</span>
+        </div>
+        
+        <!-- Action buttons (appear on hover) -->
+        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+            <!-- Add sub-document button -->
+            <button hx-post="{% url 'create_document' %}"
+                    hx-vals='{"parent_id": "{{ doc.id }}"}'
+                    hx-target="#document-list"
+                    hx-swap="innerHTML"
+                    hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                    onclick="event.stopPropagation();"
+                    class="w-6 h-6 rounded flex items-center justify-center hover:bg-indigo-500/20 text-zinc-500 hover:text-indigo-400 transition-all flex-shrink-0"
+                    title="Add sub-document">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                </svg>
+            </button>
+            
+            <!-- Delete button - now uses custom modal -->
+            <button onclick="event.stopPropagation(); showDeleteModal('{{ doc.title|escapejs }}', '{% url 'delete_document' doc.id %}', '{{ doc.id }}');"
+                    class="w-6 h-6 rounded flex items-center justify-center hover:bg-red-500/20 text-zinc-500 hover:text-red-400 transition-all flex-shrink-0"
+                    title="Delete document">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+            </button>
+        </div>
+    </li>
+
+    <!-- Children stay with their parent -->
+    {% if doc.children.all %}
+    <ul class="child-doc-list ml-4 border-l border-zinc-800 space-y-0.5" data-parent-id="{{ doc.id }}">
+        {% for child in doc.children.all %}
+        <li class="tree-item child-doc group flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-colors border-l-2 border-transparent hover:border-indigo-500"
+            id="doc-item-{{ child.id }}"
+            data-doc-id="{{ child.id }}"
+            hx-get="{% url 'get_document' child.id %}"
+            hx-target="#editor-content"
+            hx-swap="innerHTML">
+            
+            <!-- Drag handle for child -->
+            <div class="child-drag-handle opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing mr-1 text-zinc-600 hover:text-zinc-400 transition-all"
+                 onclick="event.stopPropagation();">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/>
+                </svg>
+            </div>
+            
+            <!-- Document icon and name -->
+            <div class="flex items-center gap-2 flex-1 min-w-0">
+                <svg class="w-4 h-4 text-indigo-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <span class="text-sm text-zinc-400 truncate">{{ child.title }}</span>
+            </div>
+            
+            <!-- Action buttons -->
+            <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                <button onclick="event.stopPropagation(); showDeleteModal('{{ child.title|escapejs }}', '{% url 'delete_document' child.id %}', '{{ child.id }}');"
+                        class="w-6 h-6 rounded flex items-center justify-center hover:bg-red-500/20 text-zinc-500 hover:text-red-400 transition-all flex-shrink-0"
+                        title="Delete document">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                </button>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</div>
+
+{% empty %}
+<li class="px-3 py-8 text-center">
+    <div class="w-12 h-12 mx-auto mb-3 rounded-xl bg-zinc-800 flex items-center justify-center">
+        <svg class="w-6 h-6 text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+    </div>
+    <p class="text-sm text-zinc-500 mb-1">No documents yet</p>
+    <p class="text-xs text-zinc-600">Create your first document to get started</p>
+</li>
+{% endfor %}

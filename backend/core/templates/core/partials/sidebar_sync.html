@@ -1,0 +1,8 @@
+<!-- This partial only updates the sidebar via OOB swap -->
+<!-- The empty div is swapped into nothing, but the OOB element updates the sidebar -->
+
+<!-- Out-of-Band swap: Update the sidebar document list to sync titles -->
+<ul id="document-list" hx-swap-oob="true" class="space-y-0.5">
+    {% include 'core/partials/document_list.html' %}
+</ul>
+

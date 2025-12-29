@@ -1,0 +1,11 @@
+<!-- This template returns both the editor AND the AI column -->
+<!-- The editor goes into #editor-content (main target) -->
+<!-- The AI column uses OOB swap to update #ai-column-inner -->
+
+{% include 'core/partials/editor.html' %}
+
+<!-- Out-of-Band swap for the AI Column -->
+<div id="ai-column-inner" hx-swap-oob="innerHTML">
+    {% include 'core/partials/ai_column.html' %}
+</div>
+

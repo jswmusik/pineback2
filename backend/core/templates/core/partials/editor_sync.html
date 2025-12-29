@@ -1,0 +1,7 @@
+{% include 'core/partials/editor.html' %}
+
+<!-- Out-of-Band swap: Update the sidebar document list to sync titles -->
+<ul id="document-list" hx-swap-oob="true" class="space-y-0.5">
+    {% include 'core/partials/document_list.html' %}
+</ul>
+
